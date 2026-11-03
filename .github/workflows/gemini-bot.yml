@@ -1,0 +1,31 @@
+name: Gemini AI Code Assistant
+
+on:
+  issues:
+    types: [opened, labeled]
+  issue_comment:
+    types: [created]
+
+jobs:
+  gemini-editor:
+    if: contains(github.event.comment.body, '@gemini') || contains(github.event.issue.labels.*.name, 'ai-edit')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Run Gemini CLI Action
+        uses: google-github-actions/run-gemini-cli@v1
+        with:
+          gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
+          prompt: |
+            Read the issue instructions and modify the repository code files accordingly.
+            Maintain clean React TypeScript logic without breaking existing code.
+
+      - name: Commit and Push Changes
+        run: |
+          git config --global user.name "Gemini AI Bot"
+          git config --global user.email "gemini-bot@github.com"
+          git add .
+          git commit -m "Auto-update code based on Gemini prompt" || exit 0
+          git push
